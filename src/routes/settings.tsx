@@ -1,4 +1,4 @@
-import { Button, Divider, IconButton, List, ListItem, ListItemText, ListSubheader, Switch, Typography } from "@mui/material";
+import { Button, Divider, IconButton, List, ListItem, ListItemText, ListSubheader, Switch, TextField, Typography } from "@mui/material";
 import { useNavigate} from "react-router-dom";
 import { ArrowBack } from '@mui/icons-material';
 import { useFlags } from "../settings/flags-provider";
@@ -16,14 +16,17 @@ const Settings = (props: { children: React.ReactElement }) => {
   let { getFlags, setFlags } = useFlags();
   
   const [isDarkMode, setIsDarkMode] = useState(getFlags().theme === "dark");
+  const [API_URI, setAPI_URI] = useState(getFlags().API_URI);
   
   const [isPendingChanges, setIsPendingChanges] = useState(false);
   
   useEffect(() => {
     setIsPendingChanges(
-      isDarkMode !== (getFlags().theme === "dark")
+      isDarkMode !== (getFlags().theme === "dark") ||
+      API_URI !== getFlags().API_URI
     );
-  }, [getFlags, isDarkMode]);
+  }, [getFlags, isDarkMode, API_URI]);
+  
   return (
     <Page>
       <br />
@@ -43,6 +46,14 @@ const Settings = (props: { children: React.ReactElement }) => {
           <ArrowBack />
         </IconButton>
         <ListSubheader>URL's</ListSubheader>
+        <ListItem>
+          <ListItemText primary="API URL Endpoint" />
+          <TextField
+            variant='standard'
+            value={API_URI}
+            onChange={(e) => setAPI_URI(e.target.value)}
+          />
+        </ListItem>
         <Divider />
         <ListSubheader>Theming</ListSubheader>
         <ListItem>
@@ -64,6 +75,7 @@ const Settings = (props: { children: React.ReactElement }) => {
             onClick={() => {
               let flags = getFlags();
               flags.theme = isDarkMode ? "dark" : "light";
+              flags.API_URI = API_URI;
               setFlags(flags);
               navigate(0);
             }}
