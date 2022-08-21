@@ -1,6 +1,8 @@
 import { Button } from '@mui/material';
 import React from 'react'
 import styled, { useTheme } from 'styled-components';
+import NewEventModal from './new-event-modal';
+import NewSlotModal from './new-slot-modal';
 
 const Wrapper = styled.div`
   width: 100vw;
@@ -21,6 +23,8 @@ const Header = () => {
       <Button variant='outlined' href='/'>
         Home
       </Button>
+      <NewEventModal />
+      <NewSlotModal />
       <Button variant='outlined' href='/settings'>
         Settings
       </Button>

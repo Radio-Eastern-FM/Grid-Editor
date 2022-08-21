@@ -23,6 +23,11 @@ const App = (props: { children: React.ReactElement }) => {
   const client = new ApolloClient({
     uri: getFlags().API_URI,
     cache: new InMemoryCache(),
+    defaultOptions: {
+      watchQuery: {
+        fetchPolicy: "no-cache"
+      },
+    },
   });
   
   return (
