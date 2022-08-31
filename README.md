@@ -1,3 +1,3 @@
-# DAM app (React)
+# Grid Editor
 
-todo: description
+A frontend for the GRID API
