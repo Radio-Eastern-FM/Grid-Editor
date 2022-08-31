@@ -29,13 +29,6 @@ const Home = (props: {}) => {
         onChange={(value:Date|null) => setFrom(value)}
         renderInput={(params:any) => <TextField variant='standard' {...params} />}
       />
-      <br />
-      <WithLoadingIndicator loading={onAt.loading}>
-        <h5>Data:</h5>
-          <pre>
-            {JSON.stringify(onAt.data, null, 2)}
-          </pre>
-      </WithLoadingIndicator>
       <Grid />
     </Page>
   );

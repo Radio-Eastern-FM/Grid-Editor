@@ -1,11 +1,11 @@
 import React from 'react'
-import { List, Button, Card, CardContent, Divider, ListItem, ListItemText, Modal, TextField, useTheme, Typography, Autocomplete, Grid } from '@mui/material';
+import { List, Button, Card, CardContent, Divider, ListItem, Modal, TextField, useTheme, Typography, Autocomplete, Grid } from '@mui/material';
 import styled from 'styled-components';
-import { useMutation, useQuery } from '@apollo/client';
-import queries from '../services/graphql-queries';
-import { EventDocument, ProgramDocument, SlotDocument, slotToString } from '../models';
-import { DesktopDatePicker } from '@mui/x-date-pickers';
+import { useMutation } from '@apollo/client';
+import { days, SlotDocument } from '../models';
+import { TimePicker } from '@mui/x-date-pickers';
 import mutations from '../services/graphql-mutations';
+import moment from 'moment';
 
 const ModalCard = styled(Card)`
   position: absolute;
@@ -21,20 +21,21 @@ const ModalCard = styled(Card)`
 `;
 
 interface IFormInput {
-  // TODO:
+  day: number
+  start: Date,
+  end: Date,
 }
 
 const defaultFormInput = {
-  // TODO:
+  day: 0,
+  start: new Date(),
+  end: new Date(),
 } as IFormInput;
 
 
 const NewSlotModal = () => {
   const theme = useTheme();
   const [isOpen, setIsOpen] = React.useState(false);
-  
-  const programs = useQuery(queries.programs);
-  const slots = useQuery(queries.slots);
   
   const [addSlot, addSlotResult] = useMutation(mutations.addSlot);
   
@@ -45,21 +46,19 @@ const NewSlotModal = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // const newSlot: SlotDocument = {
-    //   // TODO:
-    // }
-    // addSlot({variables: {...newSlot}});
+    const newSlot: SlotDocument = {
+      day: formInput.day,
+      hourStart: new Date(formInput.start).getHours(),
+      minuteStart: new Date(formInput.start).getMinutes(),
+      hourEnd: new Date(formInput.end).getHours(),
+      minuteEnd: new Date(formInput.end).getMinutes(),
+    }
+    
+    console.log(newSlot);
+    
+    addSlot({variables: {...newSlot}});
   };
   
-  
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target?.name;
-    const newValue = e.target?.value;
-    setFormInput({
-      ...formInput,
-      [name]: newValue
-    } as IFormInput);
-  }
   
   React.useEffect(() => {
     if(!addSlotResult.loading === true && addSlotResult.data){
@@ -68,6 +67,13 @@ const NewSlotModal = () => {
       setFormInput(defaultFormInput);
     }
   }, [addSlotResult.data, addSlotResult.loading]);
+  
+  const timeDiff = (start: Date, end: Date) => {
+    const from = moment(start);
+    const to = moment(end);
+    
+    return `${to.diff(from, 'hours')}h ${to.diff(from, 'minutes')}m`;
+  }
   
   return(
     <>
@@ -92,33 +98,63 @@ const NewSlotModal = () => {
                     onChange={handleInput}
                   />
                 </ListItem>
+                */}
                 <ListItem>
                   <Autocomplete
                     fullWidth={true}
-                    options={programs?.data?.programs.map((program: ProgramDocument) => 
-                      ({label: program.title, _id: program._id})) ?? []} 
-                    value={formInput.program}
-                    onChange={(e: any, newValue: ProgramDocument|null) => setFormInput({
+                    options={[0, 1, 2, 3, 4, 5, 6]}
+                    value={formInput.day}
+                    getOptionLabel={(option: number) => days[option]}
+                    onChange={(e: any, newValue: number|null) => setFormInput({
                       ...formInput,
-                      program: newValue ?? formInput.program
+                      day: newValue ?? formInput.day,
                     })}
                     renderInput={(params) => 
                       <TextField
                         variant='standard'
                         required={true}
-                        label="Program"
+                        label="Day"
                         {...params}
                       />}
                   />
                 </ListItem>
                 <ListItem>
-                  <Autocomplete
-                    fullWidth={true}
-                    options={slots?.data?.slots ?? []} 
-                    value={formInput.slot}
-                    getOptionLabel={(option: SlotDocument) => slotToString(option)}
-                    onChange={(e: any, newValue: SlotDocument|null) => setFormInput({
-                      ...formInput,
+                  <TimePicker
+                    label="Start Time"
+                    inputFormat="H:mm"
+                    value={formInput.start}
+                    onChange={(newValue: Date | null) => {
+                      setFormInput({
+                        ...formInput,
+                        start: newValue ?? formInput.start
+                      })
+                    }}
+                    renderInput={(params: any) => <TextField {...params} />}
+                  />
+                </ListItem>
+                <ListItem>
+                  <TimePicker
+                    label="End Time"
+                    inputFormat="H:mm"
+                    value={formInput.end}
+                    onChange={(newValue: Date | null) => {
+                      setFormInput({
+                        ...formInput,
+                        end: newValue ?? formInput.end
+                      })
+                    }}
+                    renderInput={(params: any) => <TextField {...params} />}
+                  />
+                </ListItem>
+                {/* 
+                <ListItem>
+                <Autocomplete
+                fullWidth={true}
+                options={slots?.data?.slots ?? []} 
+                value={formInput.slot}
+                getOptionLabel={(option: SlotDocument) => slotToString(option)}
+                onChange={(e: any, newValue: SlotDocument|null) => setFormInput({
+                  ...formInput,
                       slot: newValue ?? formInput.slot
                     })}
                     renderInput={(params) => 
@@ -127,28 +163,28 @@ const NewSlotModal = () => {
                         required={true}
                         label="Slot"
                         {...params}
-                      />}
-                  />
-                </ListItem>
-                <ListItem>
-                  <DesktopDatePicker
-                    label="Start"
-                    inputFormat="DD/MM/yyyy"
-                    value={formInput.from}
-                    onChange={(newValue) => setFormInput({
-                      ...formInput,
-                      'from': newValue ?? formInput.from
-                    })}
-                    renderInput={(params:any) => <TextField fullWidth={true} required={true} variant='standard' {...params} />}
-                  />
-                  <Divider orientation="vertical" flexItem sx={{mx: 3}}/>
-                  <DesktopDatePicker
-                    label="End"
-                    inputFormat="DD/MM/yyyy"
-                    value={formInput.to}
-                    onChange={(newValue) => setFormInput({
-                      ...formInput,
-                      'to': newValue ?? formInput.to
+                        />}
+                        />
+                        </ListItem>
+                        <ListItem>
+                        <DesktopDatePicker
+                        label="Start"
+                        inputFormat="DD/MM/yyyy"
+                        value={formInput.from}
+                        onChange={(newValue) => setFormInput({
+                          ...formInput,
+                          'from': newValue ?? formInput.from
+                        })}
+                        renderInput={(params:any) => <TextField fullWidth={true} required={true} variant='standard' {...params} />}
+                        />
+                        <Divider orientation="vertical" flexItem sx={{mx: 3}}/>
+                        <DesktopDatePicker
+                        label="End"
+                        inputFormat="DD/MM/yyyy"
+                        value={formInput.to}
+                        onChange={(newValue) => setFormInput({
+                          ...formInput,
+                          'to': newValue ?? formInput.to
                     })}
                     renderInput={(params:any) => <TextField fullWidth={true} required={true} variant='standard' {...params} />}
                   />
@@ -160,7 +196,7 @@ const NewSlotModal = () => {
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
-                >
+                  >
                   <Grid item>
                     <Button
                       variant="contained"
@@ -169,7 +205,7 @@ const NewSlotModal = () => {
                         setFormInput(defaultFormInput);
                       }}
                       color="error"
-                    >
+                      >
                       Cancel
                     </Button>
                   </Grid>
@@ -178,7 +214,7 @@ const NewSlotModal = () => {
                       variant="contained"
                       disabled={addSlotResult.loading === true}
                       type="submit"
-                    >
+                      >
                       {addSlotResult.loading ? 'Creating Slot...' : 'Create'}
                     </Button>
                   </Grid>
@@ -186,11 +222,17 @@ const NewSlotModal = () => {
                 </ListItem>
               </List>
             </form>
-            {addSlotResult.error &&
-              <Typography color="error" variant="caption">
-                {addSlotResult.error.message}
+            {formInput.end && formInput.start && formInput.end > formInput.start &&
+              <Typography variant="caption">
+                Length: {timeDiff(formInput.end, formInput.end)}
+                <br />
               </Typography>
             }
+            <Typography color="error" variant="caption">
+              {addSlotResult.error && addSlotResult.error.message}
+              <br />
+              {formInput.end <= formInput.start && "Dates must occur sequentially"}
+            </Typography>
           </CardContent>
         </ModalCard>
       </Modal>
